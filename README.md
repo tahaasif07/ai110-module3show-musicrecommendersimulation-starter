@@ -4,9 +4,9 @@
 
 For this project, I built a Python-based music recommendation system that recommends songs based on a user's favorite genre, mood, and energy level.
 
-My recommender uses a dataset of 20 fictional songs and calculates a score for each song. It then ranks the songs and displays the top five recommendations with explanations.
+My recommender uses a dataset of 20 fictional songs and calculates a score for each song. It then ranks the songs and displays the top five recommendations with explanations showing why each song was selected.
 
-The goal was to understand how recommendation systems turn data and user preferences into personalized suggestions.
+The goal of this project was to understand how recommendation systems turn data and user preferences into personalized suggestions.
 
 ---
 
@@ -39,6 +39,8 @@ The current scoring algorithm uses genre, mood, and energy. The other numerical 
 
 Each user profile contains a favorite genre, favorite mood, and target energy level.
 
+The program compares these preferences with every song in the dataset.
+
 ### Scoring Algorithm
 
 Every song receives points based on how closely it matches the user's preferences:
@@ -53,7 +55,9 @@ Energy similarity is calculated using:
 
 `1 - abs(user_energy - song_energy)`
 
-The program calculates a score for each song, ranks all songs from highest to lowest score, and returns the top five results.
+The closer a song's energy is to the user's preferred energy, the more points it earns.
+
+The program calculates a score for each song, ranks all songs from highest to lowest score, and returns the top five recommendations.
 
 ### Recommendation Process
 
@@ -73,10 +77,15 @@ One possible bias is that genre receives more weight than other features, which 
 
 Clone the repository and open the project folder.
 
-Create and activate a virtual environment:
+Create a virtual environment:
 
 ```bash
 python3 -m venv .venv
+```
+
+Activate the environment on macOS or Linux:
+
+```bash
 source .venv/bin/activate
 ```
 
@@ -102,13 +111,13 @@ python -m pytest -v
 
 The test suite checks recommendation sorting and explanation generation.
 
-During development, both starter tests passed.
+During development, both starter tests passed successfully.
 
 ---
 
 ## Sample Recommendation Output
 
-The following results were collected from the original scoring algorithm.
+The following results were collected using the original scoring algorithm.
 
 ### Profile 1: Happy Pop
 
@@ -182,35 +191,39 @@ Because: Energy similarity (+0.95)
 
 ### Experiment 1: Different User Profiles
 
-I tested three different user profiles to see how preferences changed the recommendations.
+I tested three different user profiles to see how their preferences changed the recommendations.
 
-Happy Pop ranked Sunrise City first because its genre, mood, and energy were close to the user's preferences.
+**Happy Pop:** Sunrise City ranked first because its genre, mood, and energy closely matched the user's preferences.
 
-Chill Lofi ranked Library Rain first because it matched the user's preferred genre and mood and had a similar low energy level.
+**Chill Lofi:** Library Rain ranked first because it matched the preferred genre and mood while having a similar low energy level.
 
-Intense Rock ranked Storm Runner first because of its matching genre, intense mood, and high energy level.
+**Intense Rock:** Storm Runner ranked first because it matched the user's favorite genre, intense mood, and high energy level.
 
-Comparing Happy Pop and Chill Lofi showed that different preferences produced different rankings. Chill Lofi favored low-energy songs, while Happy Pop favored upbeat music.
+### Comparing the Results
 
-Comparing Chill Lofi and Intense Rock showed how low-energy and high-energy preferences affected the results.
+Comparing Happy Pop and Chill Lofi showed that different preferences produced different rankings. Chill Lofi favored calmer music, while Happy Pop favored upbeat songs.
 
-Comparing Happy Pop and Intense Rock showed that a song like Gym Hero could appear in both lists for different reasons.
+Comparing Chill Lofi and Intense Rock demonstrated how low-energy and high-energy preferences affected the results. Library Rain ranked first for Chill Lofi, while Storm Runner ranked first for Intense Rock.
+
+Comparing Happy Pop and Intense Rock showed that Gym Hero could appear in both lists for different reasons. It matched Happy Pop's genre, while it matched Intense Rock's mood and energy.
+
+These results showed that the same dataset can generate different recommendations based on user preferences.
 
 ### Experiment 2: Increasing Energy Weight
 
-I tested an alternative algorithm that doubled energy similarity's maximum contribution from 1.0 to 2.0 points while leaving the genre and mood weights unchanged.
+I tested an alternative scoring algorithm that doubled energy similarity's maximum contribution from 1.0 to 2.0 points while keeping the genre and mood weights unchanged.
 
-In the observed experimental rankings:
+In the experimental rankings:
 
 - Gym Hero moved from second to fourth for Happy Pop.
 - Spacewalk Thoughts moved from fourth to third for Chill Lofi.
 - Storm Runner remained first for Intense Rock.
 
-This showed that increasing the importance of energy could allow songs from different genres to rank higher.
+This demonstrated that increasing the importance of energy can allow songs with closer energy values to outrank songs that match the user's preferred genre.
 
-The experiment also helped me understand that scoring weights need to be carefully balanced and verified for consistency.
+The experiment helped me understand how adjusting weights influences recommendations and how important it is to balance different features.
 
-After testing, I restored the original algorithm.
+After testing, I restored the original scoring algorithm.
 
 ---
 
@@ -218,21 +231,26 @@ After testing, I restored the original algorithm.
 
 My recommendation system has several limitations.
 
-First, the dataset contains only 20 fictional songs, which means it cannot represent the full range of musical preferences.
+First, the dataset only contains 20 fictional songs, which means it cannot represent the full range of musical preferences.
 
-Second, the algorithm gives more importance to genre than mood or energy. This might create a filter bubble where users receive too many recommendations from familiar genres.
+Second, the algorithm gives more importance to genre than mood or energy. This could create a filter bubble where users repeatedly receive recommendations from familiar genres rather than discovering new styles.
 
 Third, the recommender does not use listening history, likes, skips, or feedback to learn from users.
 
-Finally, although the dataset includes danceability, valence, tempo, and acousticness, the scoring algorithm does not currently use these attributes.
+Finally, although the dataset includes danceability, valence, tempo, and acousticness, the current scoring algorithm does not use these attributes.
+
+These limitations could make recommendations less accurate for users with more complex or changing music preferences.
 
 ---
 
 ## Reflection
 
-The biggest thing I learned from this project is how recommendation systems can turn simple data into personalized rankings. Before this assignment, I mainly thought of music recommendations as something that required complex machine learning. Building this simulation showed me that a straightforward scoring algorithm can already produce useful results.
+The biggest thing I learned from this project is how recommendation systems can turn relatively simple data into personalized rankings. Before this assignment, I mainly thought of music recommendations as something that required complex machine learning models. Building this simulation showed me that a straightforward scoring algorithm can already produce useful results.
 
-AI assistance helped me organize the code, design the scoring logic, and consider different ways to evaluate recommendations. I still needed to run the program, check the output, and investigate inconsistencies in the scores. I also learned how the weight assigned to each feature can influence recommendations and potentially introduce bias.
+AI assistance helped me organize the Python code, design the scoring logic, and explore different ways to evaluate the recommendations. However, I still needed to test the program, check the output, and investigate inconsistencies in the scores. I also learned how the weight assigned to each feature can influence recommendations and potentially introduce bias.
 
-If I continued developing this system, I would experiment with more song attributes, larger datasets, and feedback from actual listeners.
+One of the most interesting discoveries was how changing just the energy weight affected the rankings. This helped me understand why recommendation systems must be evaluated carefully rather than assuming their outputs are always correct.
 
+If I continued developing this project, I would experiment with more song attributes, larger datasets, user feedback, and diversity rules to improve personalization.
+
+For additional details about the model, its evaluation, limitations, and future improvements, see the [Model Card](model_card.md).
