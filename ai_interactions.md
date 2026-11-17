@@ -1,43 +1,88 @@
-# AI Interactions Log
+# AI Collaboration and System Design
 
-> **Stretch features only.** Only fill in the sections that apply to stretch features you attempted. If you did not attempt a stretch feature, leave its section blank or delete it. This file is not required for the core project.
+## How I Used AI
 
----
+I used AI to help extend my AI110 Module 3 music recommender
+into Tempo. I shared the original project, assignment rubric,
+source files, screenshots, and error messages.
 
-## Agentic Workflow (SF8)
+AI helped with implementation, interface design, debugging,
+evaluation, and documentation. I applied changes in VS Code
+and ran the system locally.
 
-> Document your experience using an AI agent (e.g., Cursor Agent, Claude, Copilot) to make multi-step changes autonomously.
+For example, after I pasted CSS outside a Python string,
+the app reported a SyntaxError. I shared the error, and the
+assistant provided a complete replacement app.py with the
+CSS correctly enclosed.
 
-**What task did you give the agent?**
+## An AI Suggestion I Accepted
 
-<!-- Describe the goal you asked the agent to accomplish -->
+I accepted using a local pretrained sentence embedding model
+because I could not obtain an API key. MiniLM allows users
+to describe a listening moment instead of entering only
+structured genre, mood, and energy preferences.
 
-**Prompts used:**
+The model retrieves songs using metadata descriptions.
+It does not generate conversation or analyze audio.
 
-<!-- Paste the key prompts you gave the agent -->
+## Suggestions I Rejected or Revised
 
-**What did the agent generate or change?**
+I rejected the mechanical dashboard appearance and visible
+sidebar radio controls. I requested a more seamless,
+Spotify-inspired interface.
 
-<!-- List the files edited, code generated, or commands run -->
+The design was revised to use navigation buttons, smaller
+headings, and less prominent song-card borders and actions.
 
-**What did you verify or fix manually?**
+An early explanation-only extension was also revised because
+the original recommender already provided explanations.
+The substantial extension became semantic retrieval with
+integrated validation, filtering, and evaluation.
 
-<!-- Describe anything the agent got wrong or that required human review -->
+## Testing and Observations
 
----
+I ran:
 
-## Design Pattern (SF10)
+python3 -m src.evaluate_semantic
 
-> Document how AI helped you choose or implement a design pattern.
+The real-model evaluation passed 9/9 checks on my Mac.
+It tested three listening requests and checked output validity,
+input rejection, exact filtering, and repeatable rankings.
 
-**Which design pattern did you use?**
+For the rainy late-night study request, the results were:
 
-<!-- e.g., Strategy, Factory, Observer, etc. -->
+- Deep Focus
+- Spacewalk Thoughts
+- Focus Flow
+- Library Rain
+- Midnight Coding
 
-**How did AI help you brainstorm or implement it?**
+The unwinding request also returned Starlight Dance.
+This illustrates that passing technical checks does not
+guarantee every recommendation matches the intended mood.
 
-<!-- Describe the conversation or suggestions that led to your decision -->
+## Design Tradeoffs
 
-**How does the pattern appear in your final code?**
+Free-text requests make discovery more flexible, while explicit
+filters make requirements enforceable. The system uses exact
+controls for genre, mood, exclusions, and acoustic preferences
+because semantic similarity alone cannot guarantee compliance.
 
-<!-- Point to the relevant class or method -->
+The default ranking does not use the preset energy value.
+Energy contributes only when the user enables that preference.
+
+The app saves likes and mixes locally, but these actions do not
+train the model or change future rankings.
+
+## Limitations and Future Improvements
+
+The catalog contains only 20 fictional songs. Listening contexts
+are handcrafted suggestions from metadata rather than verified
+audio properties.
+
+A useful next step would be collecting independent relevance
+ratings for more requests and comparing the semantic system
+with the original scorer on held-out examples.
+
+Other improvements could include richer verified metadata,
+better rejection of unrelated requests, and licensed audio previews.

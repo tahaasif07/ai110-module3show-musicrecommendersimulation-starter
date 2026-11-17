@@ -1,256 +1,275 @@
-# 🎵 Music Recommender Simulation
+# Music Recommendation Assistant
 
-## Project Summary
+## Base project
 
-For this project, I built a Python-based music recommendation system that recommends songs based on a user's favorite genre, mood, and energy level.
+This project extends my AI110 Module 3 Show Music Recommender Simulation:
 
-My recommender uses a dataset of 20 fictional songs and calculates a score for each song. It then ranks the songs and displays the top five recommendations with explanations showing why each song was selected.
+https://github.com/tahaasif07/ai110-module3show-musicrecommendersimulation-starter
 
-The goal of this project was to understand how recommendation systems turn data and user preferences into personalized suggestions.
+The original program loaded songs from a CSV file and ranked them for
+three predefined profiles. Its scoring system awarded 2 points for a
+genre match, 1 point for a mood match, and up to 1 point for energy
+similarity. It also explained each score.
 
----
+## Extension
 
-## How The System Works
+The new command-line interface accepts supported natural-language
+requests instead of requiring hardcoded profiles.
 
-Real music platforms like Spotify and YouTube use information such as listening history, likes, skips, playlists, and song attributes to recommend music.
+A reliability workflow validates the catalog, detects ambiguous requests,
+filters songs according to explicit preferences, and checks results
+before displaying them. An evaluation script tests successful requests
+and failure cases.
 
-Two common recommendation approaches are:
+The parser uses explicit rules and dataset labels. It does not call an
+LLM, perform fine-tuning, or implement RAG.
 
-- **Content-based filtering:** Recommends music based on song characteristics and the user's preferences.
-- **Collaborative filtering:** Uses patterns from other listeners with similar interests to make recommendations.
+## Files
 
-My program uses content-based filtering.
+- recommender.py: original loading and ranking functions
+- assistant.py: request interpretation and reliability checks
+- main.py: command-line interface
+- evaluate.py: synthetic evaluation cases and pass/fail summary
+- architecture.mmd: implemented data flow
+- data/songs.csv: original song dataset
+- model_card.md: behavior and limitations
+- ai_interactions.md: AI collaboration record and reflection
 
-### Song Features
+## Setup
 
-Each song includes the following attributes:
+Use Python 3.10 or newer. No third-party packages are required for these
+scripts.
 
-- Title and artist
-- Genre and mood
-- Energy
-- Tempo (BPM)
-- Valence
-- Danceability
-- Acousticness
+Keep the original songs.csv inside the data folder.
 
-The current scoring algorithm uses genre, mood, and energy. The other numerical attributes are stored for future improvements.
+Run:
 
-### User Preferences
+```bash
+python main.py "happy pop high energy" --count 3
+python main.py "calm lofi music for studying" --count 3
+python main.py "intense rock high energy" --count 3
+python evaluate.py
+```
 
-Each user profile contains a favorite genre, favorite mood, and target energy level.
+The default count is 5. When fewer songs meet all requirements, the
+program returns the available matches.
 
-The program compares these preferences with every song in the dataset.
+To use another CSV:
 
-### Scoring Algorithm
+```bash
+python main.py "happy pop" --data data/songs.csv
+```
 
-Every song receives points based on how closely it matches the user's preferences:
+## Interpreting requests
 
-| Feature | Points |
-|---|---|
-| Matching genre | +2.0 |
-| Matching mood | +1.0 |
-| Energy similarity | Up to +1.0 |
+Genres and moods are read from the dataset.
 
-Energy similarity is calculated using:
+Supported aliases include:
+- calm, relaxing, study, studying: chill
+- cheerful, joyful: happy
+- workout, gym: intense
 
-`1 - abs(user_energy - song_energy)`
+An alias is only enabled if its target mood exists in the dataset.
 
-The closer a song's energy is to the user's preferred energy, the more points it earns.
+Low-energy phrases set target energy to 0.3.
+High-energy phrases set target energy to 0.9.
+Otherwise, the target is 0.5.
 
-The program calculates a score for each song, ranks all songs from highest to lowest score, and returns the top five recommendations.
+Acoustic requests require acousticness of at least 0.6.
 
-### Recommendation Process
+Genre and mood are filters. Energy is a ranking preference, not a hard
+limit. Unspecified genre or mood is left unrestricted.
 
-1. Load songs from the CSV dataset.
-2. Read the user's preferences.
-3. Calculate a score for every song.
-4. Sort the songs by their scores.
-5. Display the top five recommendations with explanations.
+## Example output
 
-One possible bias is that genre receives more weight than other features, which could make the system favor familiar music.
+The following is an illustrative example using the synthetic catalog
+defined in evaluate.py. These are not claimed to be songs from songs.csv
+or captured execution results.
 
----
+Input:
 
-## Getting Started
+```text
+happy pop high energy
+```
 
-### Setup
+Expected recommendation:
 
-Clone the repository and open the project folder.
+```text
+Sample Pop — Test Artist
+Score: 3.90/4.00
+Because: Genre match (+2.0), Mood match (+1.0), Energy similarity (+0.90)
+```
 
-Create a virtual environment:
+Input:
+
+```text
+calm acoustic music for studying
+```
+
+Expected recommendation:
+
+```text
+Sample Study — Test Artist
+Score: 2.00/4.00
+Because: Mood match (+1.0), Energy similarity (+1.00)
+```
+
+Input:
+
+```text
+rock workout
+```
+
+Expected recommendation:
+
+```text
+Sample Rock — Test Artist
+Score: 4.00/4.00
+Because: Genre match (+2.0), Mood match (+1.0), Energy similarity (+1.00)
+```
+
+Scores depend on which preferences are specified. They are ranking
+scores, not confidence probabilities.
+
+Before submission, run the commands against the actual CSV and add
+captured command-line output here.
+
+## Guardrail examples
+
+| Input or condition | Behavior | Result |
+| --- | --- | --- |
+| Empty request | Rejects missing preferences | Asks for a music request |
+| pop rock | Detects multiple genres | Asks the user to choose one |
+| not pop | Detects unsupported exclusion | Requests positive preferences |
+| pop chill with no matching song | Refuses unrelated replacements | Suggests relaxing a requirement |
+| Song energy is NaN | Rejects invalid catalog data | No recommendations displayed |
+| Ranking component returns unknown ID | Blocks invalid output | No invalid song displayed |
+
+## Evaluation
+
+```bash
+python evaluate.py
+```
+
+The script contains 10 test methods, including three successful request
+examples, ambiguity checks, catalog validation, acoustic filtering,
+invalid recommendation counts, and a simulated faulty ranking result.
+
+It prints individual test results and a summary in this format:
+
+```text
+Evaluation summary: X/10 tests passed.
+```
+
+The tests have not been executed in the authoring chat. Record the
+actual result after running them.
+
+## Limitations and future work
+
+The parser recognizes a limited set of words and phrases. It cannot
+reliably understand negation, multiple requested genres, complex
+sentences, or every unsupported preference. Recognized parts of a
+request may be used even when other words are ignored.
+
+Strict filtering can return fewer recommendations. The acoustic
+threshold is manually selected. The evaluation uses a small synthetic
+catalog and does not measure real listeners' satisfaction.
+
+Future improvements include testing the real CSV, collecting listener
+feedback, adding better language interpretation, and supporting
+explicit exclusions.
+## Project 4: Applied AI Extension
+
+This project extends my AI110 Module 3 Music Recommender Simulation.
+The original system ranked 20 fictional songs using genre matches
+(+2), mood matches (+1), and energy similarity (up to +1). It already
+provided score explanations.
+
+The new system, Tempo, adds local semantic retrieval using
+sentence-transformers/all-MiniLM-L6-v2. Users describe a listening
+moment, and the model compares their request with song metadata
+descriptions. It requires no API key.
+
+Tempo also adds a Streamlit interface, liked songs, saved mixes,
+and integrated reliability controls. It performs semantic retrieval,
+not generative conversation, audio analysis, or autonomous planning.
+
+### Setup and Run
+
+Run these commands in Terminal from the project folder:
 
 ```bash
 python3 -m venv .venv
-```
-
-Activate the environment on macOS or Linux:
-
-```bash
 source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+python3 -m streamlit run app.py
 ```
 
-Install dependencies:
+If the virtual environment already exists, skip its creation.
+
+Open http://localhost:8501. The first discovery request requires
+internet access to download the pretrained model. Later requests
+can use the cached model.
+
+### Evaluation
 
 ```bash
-pip install -r requirements.txt
+python3 -m src.evaluate_semantic
 ```
 
-Run the recommender:
-
-```bash
-python src/main.py
-```
-
-### Running Tests
-
-Run the tests using:
-
-```bash
-python -m pytest -v
-```
-
-The test suite checks recommendation sorting and explanation generation.
-
-During development, both starter tests passed successfully.
-
----
-
-## Sample Recommendation Output
-
-The following results were collected using the original scoring algorithm.
-
-### Profile 1: Happy Pop
-
-Preferences: Pop, Happy, Energy 0.8
+Actual results from my Mac:
 
 ```text
-===== Happy Pop =====
-Sunrise City - Score: 3.98
-Because: Genre match (+2.0), Mood match (+1.0), Energy similarity (+0.98)
+Request: Mellow music for a rainy late-night study session
+Deep Focus — Quiet Mind
+Spacewalk Thoughts — Orbit Bloom
+Focus Flow — LoRoom
+Library Rain — Paper Lanterns
+Midnight Coding — LoRoom
 
-Gym Hero - Score: 2.87
-Because: Genre match (+2.0), Energy similarity (+0.87)
+Request: Gentle relaxed music for unwinding
+Spacewalk Thoughts — Orbit Bloom
+Deep Focus — Quiet Mind
+Golden Fields — Acoustic Soul
+Library Rain — Paper Lanterns
+Starlight Dance — Nova Beat
 
-Rooftop Lights - Score: 1.96
-Because: Mood match (+1.0), Energy similarity (+0.96)
+Request: Energetic upbeat music for a workout
+Storm Runner — Voltline
+Street Kings — Urban Flow
+Rooftop Lights — Indigo Parade
+Gym Hero — Max Pulse
+Night Drive Loop — Neon Echo
 
-Starlight Dance - Score: 1.95
-Because: Mood match (+1.0), Energy similarity (+0.95)
-
-Electric Dreams - Score: 1.85
-Because: Mood match (+1.0), Energy similarity (+0.85)
+Evaluation summary: 9/9 checks passed.
 ```
 
-### Profile 2: Chill Lofi
+The evaluation checks valid catalog results, unique song IDs,
+finite scores, descending ranking, request validation, exact
+filters, and repeatable results. Passing these checks demonstrates
+technical reliability, not subjective recommendation quality.
 
-Preferences: Lofi, Chill, Energy 0.3
+### Guardrail Examples
 
-```text
-===== Chill Lofi =====
-Library Rain - Score: 3.95
-Because: Genre match (+2.0), Mood match (+1.0), Energy similarity (+0.95)
+| Input or setting | Actual behavior |
+| --- | --- |
+| Empty request | Rejected: “Describe the music you want.” |
+| `no rock` | Rejected with directions to use exclusion controls. |
+| Select pop and exclude pop | Rejected because the requirements conflict. |
+| Select rock and chill | Reports that no songs match these filters. |
+| Select lofi and acoustic only | Every result satisfies both filters. |
+| Repeat the same request | Returns the same song order. |
 
-Midnight Coding - Score: 3.88
-Because: Genre match (+2.0), Mood match (+1.0), Energy similarity (+0.88)
+### Limitations
 
-Focus Flow - Score: 2.90
-Because: Genre match (+2.0), Energy similarity (+0.90)
+The catalog contains only 20 fictional songs and no bundled audio.
+Listening contexts are handcrafted suggestions based on metadata,
+not verified audio facts. Semantic similarity can produce imperfect
+matches: the unwinding example includes Starlight Dance. Exact mood
+and genre controls can enforce requirements.
 
-Spacewalk Thoughts - Score: 1.98
-Because: Mood match (+1.0), Energy similarity (+0.98)
+Likes and mixes are stored locally for one user and do not train
+the model. Similarity scores are ranking values, not confidence
+probabilities.
 
-Broken Memories - Score: 1.00
-Because: Energy similarity (+1.00)
-```
-
-### Profile 3: Intense Rock
-
-Preferences: Rock, Intense, Energy 0.9
-
-```text
-===== Intense Rock =====
-Storm Runner - Score: 3.99
-Because: Genre match (+2.0), Mood match (+1.0), Energy similarity (+0.99)
-
-Street Kings - Score: 1.98
-Because: Mood match (+1.0), Energy similarity (+0.98)
-
-Gym Hero - Score: 1.97
-Because: Mood match (+1.0), Energy similarity (+0.97)
-
-Dark Horizon - Score: 1.92
-Because: Mood match (+1.0), Energy similarity (+0.92)
-
-Electric Dreams - Score: 0.95
-Because: Energy similarity (+0.95)
-```
-
----
-
-## Experiments You Tried
-
-### Experiment 1: Different User Profiles
-
-I tested three different user profiles to see how their preferences changed the recommendations.
-
-**Happy Pop:** Sunrise City ranked first because its genre, mood, and energy closely matched the user's preferences.
-
-**Chill Lofi:** Library Rain ranked first because it matched the preferred genre and mood while having a similar low energy level.
-
-**Intense Rock:** Storm Runner ranked first because it matched the user's favorite genre, intense mood, and high energy level.
-
-### Comparing the Results
-
-Comparing Happy Pop and Chill Lofi showed that different preferences produced different rankings. Chill Lofi favored calmer music, while Happy Pop favored upbeat songs.
-
-Comparing Chill Lofi and Intense Rock demonstrated how low-energy and high-energy preferences affected the results. Library Rain ranked first for Chill Lofi, while Storm Runner ranked first for Intense Rock.
-
-Comparing Happy Pop and Intense Rock showed that Gym Hero could appear in both lists for different reasons. It matched Happy Pop's genre, while it matched Intense Rock's mood and energy.
-
-These results showed that the same dataset can generate different recommendations based on user preferences.
-
-### Experiment 2: Increasing Energy Weight
-
-I tested an alternative scoring algorithm that doubled energy similarity's maximum contribution from 1.0 to 2.0 points while keeping the genre and mood weights unchanged.
-
-In the experimental rankings:
-
-- Gym Hero moved from second to fourth for Happy Pop.
-- Spacewalk Thoughts moved from fourth to third for Chill Lofi.
-- Storm Runner remained first for Intense Rock.
-
-This demonstrated that increasing the importance of energy can allow songs with closer energy values to outrank songs that match the user's preferred genre.
-
-The experiment helped me understand how adjusting weights influences recommendations and how important it is to balance different features.
-
-After testing, I restored the original scoring algorithm.
-
----
-
-## Limitations and Risks
-
-My recommendation system has several limitations.
-
-First, the dataset only contains 20 fictional songs, which means it cannot represent the full range of musical preferences.
-
-Second, the algorithm gives more importance to genre than mood or energy. This could create a filter bubble where users repeatedly receive recommendations from familiar genres rather than discovering new styles.
-
-Third, the recommender does not use listening history, likes, skips, or feedback to learn from users.
-
-Finally, although the dataset includes danceability, valence, tempo, and acousticness, the current scoring algorithm does not use these attributes.
-
-These limitations could make recommendations less accurate for users with more complex or changing music preferences.
-
----
-
-## Reflection
-
-The biggest thing I learned from this project is how recommendation systems can turn relatively simple data into personalized rankings. Before this assignment, I mainly thought of music recommendations as something that required complex machine learning models. Building this simulation showed me that a straightforward scoring algorithm can already produce useful results.
-
-AI assistance helped me organize the Python code, design the scoring logic, and explore different ways to evaluate the recommendations. However, I still needed to test the program, check the output, and investigate inconsistencies in the scores. I also learned how the weight assigned to each feature can influence recommendations and potentially introduce bias.
-
-One of the most interesting discoveries was how changing just the energy weight affected the rankings. This helped me understand why recommendation systems must be evaluated carefully rather than assuming their outputs are always correct.
-
-If I continued developing this project, I would experiment with more song attributes, larger datasets, user feedback, and diversity rules to improve personalization.
-
-For additional details about the model, its evaluation, limitations, and future improvements, see the [Model Card](model_card.md).
+The architecture source is included in architecture.mmd.

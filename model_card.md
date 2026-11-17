@@ -1,123 +1,118 @@
-# 🎧 Model Card: VibeFinder 1.0
+# Model Card: Tempo
 
-## 1. Model Name
+## Purpose
 
-**VibeFinder 1.0 — Music Recommender Simulation**
+Tempo helps users discover songs by describing a listening moment.
+It extends the AI110 Module 3 recommender, which originally ranked
+20 fictional songs using genre, mood, and energy preferences.
 
-VibeFinder is a Python-based music recommendation system that suggests songs based on a user's preferred genre, mood, and energy level.
+## Model
 
-## 2. Intended Use
+Tempo uses sentence-transformers/all-MiniLM-L6-v2, a pretrained
+sentence embedding model running locally on CPU.
 
-VibeFinder is designed to demonstrate how a content-based music recommendation system works. It recommends five songs based on a user's music preferences.
+The model compares a user's request with descriptions built from
+song metadata. No API key or fine-tuning is required. The first
+model download requires internet access.
 
-The system assumes that a user's taste can be represented using a favorite genre, favorite mood, and target energy level.
+This is semantic retrieval. It does not generate conversation,
+analyze audio, or act as an autonomous agent.
 
-This project is intended for educational purposes, not for commercial use or as a replacement for Spotify or other music platforms.
+## Data
 
-## 3. How the Model Works
+The catalog is data/songs.csv and contains 20 fictional songs.
 
-The system compares each song's characteristics with the user's music preferences.
+Descriptions use genre, mood, energy, acousticness, tempo, and
+danceability. Handcrafted rules add possible listening contexts,
+such as studying or exercising. These contexts are suggestions
+from metadata, not verified facts about the audio.
 
-The scoring system awards:
-- 2.0 points for matching the user's favorite genre.
-- 1.0 point for matching the user's preferred mood.
-- Up to 1.0 point based on how close the song's energy is to the user's preferred energy level.
+Valence is validated but is not currently used for ranking.
 
-After calculating each song's score, the system sorts all songs from highest to lowest and recommends the top five.
+## Ranking
 
-Each recommendation includes an explanation showing how its score was calculated.
+Song descriptions and user requests are converted into normalized
+embeddings. Their dot product gives cosine similarity, which is
+clipped to the range 0–1.
 
-I replaced the starter project's placeholder functions with working code for loading songs, calculating scores, ranking recommendations, and providing explanations.
+By default, the interface ranks using semantic similarity alone.
+When the user enables an energy preference, ranking combines:
 
-## 4. Data
+- 75% semantic similarity.
+- 25% normalized original scoring.
 
-The dataset contains 20 fictional songs stored in `data/songs.csv`.
+Genre, mood, excluded genres, and acoustic-only settings are
+applied as hard filters. Acoustic-only requires acousticness
+of at least 0.6.
 
-The starter dataset originally contained 10 songs, and I expanded it by adding 10 additional songs representing different genres and moods.
+Scores are ranking values, not confidence probabilities.
+Equal scores are ordered by song ID.
 
-Each song contains attributes including genre, mood, energy, tempo, valence, danceability, and acousticness.
+## Reliability Controls
 
-The current algorithm only uses genre, mood, and energy to calculate scores.
+The system checks:
 
-The small dataset limits the variety of recommendations and does not represent every musical genre, language, or listening preference.
+- Required metadata and unique integer song IDs.
+- Numeric attribute ranges and positive finite tempo.
+- Empty requests and requests longer than 500 characters.
+- Invalid parameters and contradictory filters.
+- Requests containing negation, directing users to exclusion controls.
+- Cases where no songs satisfy the filters.
+- Nonfinite similarity scores.
 
-## 5. Strengths
+Failed discovery requests clear the previous mix.
 
-One strength of the recommender is that it produces different results depending on a user's preferences.
+Saved likes and mixes use checked JSON and atomic file replacement.
+Corrupt saved data is reported instead of silently overwritten.
 
-For example, Happy Pop received Sunrise City as its top recommendation, while Chill Lofi received Library Rain.
+## Actual Evaluation
 
-The scoring system is also easy to understand because each recommendation includes an explanation showing where the points came from.
+Command:
 
-The algorithm successfully identifies songs that match a user's genre and mood while considering their preferred energy level.
+python3 -m src.evaluate_semantic
 
-## 6. Limitations and Bias
+The real-model evaluation ran successfully on the user's Mac
+with Python 3.14 and passed 9/9 checks.
 
-One major limitation is the small dataset of only 20 songs, which restricts the number and variety of recommendations.
+Three requests each returned five unique catalog songs with
+finite scores in descending order. Six additional checks covered
+empty requests, negation, conflicting filters, no matches,
+genre/acoustic filtering, and repeatable rankings.
 
-Another limitation is that the algorithm places more importance on genre than mood or energy. This may create a filter bubble where users mainly receive familiar genres instead of discovering different styles of music.
+Example first results:
 
-The system also does not learn from user behavior, such as likes, skips, or listening history.
+| Request | First result |
+| --- | --- |
+| Rainy late-night study | Deep Focus |
+| Gentle unwinding | Spacewalk Thoughts |
+| Energetic workout | Storm Runner |
 
-Additionally, the algorithm does not currently use features such as danceability, valence, and acousticness, even though they are included in the dataset.
+These checks establish technical behavior. They do not measure
+subjective musical relevance or prove superiority over the
+original recommender.
 
-These limitations may make the recommendations less accurate for users with complex or changing music preferences.
+## Limitations
 
-## 7. Evaluation
+The catalog is small and fictional. No audio is bundled.
 
-I tested my recommender using three different user profiles.
+Semantic similarity does not guarantee that every result fits
+the intended mood. For example, the unwinding request returned
+Starlight Dance among its five results. Explicit filters help
+enforce requirements.
 
-**Happy Pop:** Genre pop, mood happy, energy 0.8. Sunrise City ranked first with a score of 3.98.
+The model does not verify lyrics, explicit content, instruments,
+or listening quality. Unrelated requests may still return nearby
+catalog entries. Negation handling is conservative and may reject
+otherwise harmless wording.
 
-**Chill Lofi:** Genre lofi, mood chill, energy 0.3. Library Rain ranked first with a score of 3.95.
+Likes and saved mixes do not personalize or train the model.
+Storage supports one local user, not concurrent hosted accounts.
 
-**Intense Rock:** Genre rock, mood intense, energy 0.9. Storm Runner ranked first with a score of 3.99.
+## Future Improvements
 
-### Comparing User Profiles
+Collect independent relevance judgments for a larger set of
+requests, compare results with the original scorer, and evaluate
+on held-out examples before changing ranking rules further.
 
-Happy Pop and Chill Lofi produced different recommendations because they preferred different genres and energy levels.
-
-Chill Lofi and Intense Rock showed how the recommender distinguishes between low-energy and high-energy music.
-
-Happy Pop and Intense Rock both included Gym Hero, but for different reasons. It matched Happy Pop's genre, while it matched Intense Rock's mood and energy.
-
-### Scoring Experiment
-
-I also experimented with doubling the importance of energy similarity from a maximum of 1.0 point to 2.0 points.
-
-For Happy Pop, Gym Hero moved from second to fourth place because other songs had energy values closer to the user's preference.
-
-For Chill Lofi, Spacewalk Thoughts moved from fourth to third place.
-
-Storm Runner remained first for Intense Rock because it matched all three important features.
-
-This experiment showed that changing the weight of one feature can significantly influence recommendation rankings.
-
-After the experiment, I restored the original scoring rules.
-
-### Testing
-
-I used `python src/main.py` to test the recommendations and `python -m pytest -v` to run the starter tests.
-
-Both starter tests passed.
-
-## 8. Future Work
-
-If I continued developing this project, I would:
-
-1. Expand the dataset to include more songs, artists, and genres.
-2. Incorporate additional features such as danceability, valence, and acousticness.
-3. Add listening history and user feedback to improve personalization.
-4. Introduce diversity rules to prevent recommending too many songs from the same genre.
-
-These improvements could make the recommender more realistic and provide more personalized results.
-
-## 9. Personal Reflection
-
-The biggest thing I learned from this project is how a simple scoring algorithm can generate personalized music recommendations. Before this assignment, I mainly associated recommendation systems with complex machine learning models.
-
-AI tools helped me organize the Python code, understand the scoring algorithm, and explore different ways to evaluate the results. However, I also learned the importance of checking the generated code and verifying that the scores were calculated correctly.
-
-One interesting discovery was how changing the energy weight affected the rankings. Even when the user's preferences stayed the same, different songs moved higher or lower in the recommendations.
-
-This project helped me better understand how music platforms use data to recommend content and how algorithmic decisions can influence what users discover.
+Other improvements could include richer verified metadata,
+better handling of unrelated requests, and licensed audio previews.

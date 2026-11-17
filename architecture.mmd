@@ -1,0 +1,20 @@
+flowchart TD
+    CSV["Song CSV"] --> Validate["Validate song metadata"]
+    Validate --> Describe["Build metadata descriptions"]
+    Describe --> Index["Cache MiniLM song embeddings"]
+
+    User["User request and preferences"] --> Guard["Validate request"]
+    Guard --> Filter["Apply exact filters"]
+    Guard --> Embed["Embed request with MiniLM"]
+
+    Index --> Rank["Rank by semantic similarity"]
+    Filter --> Rank
+    Embed --> Rank
+    Energy["Optional original energy score"] --> Rank
+    User --> Energy
+
+    Rank --> Results["Display recommended songs"]
+    Results --> Actions["Like songs or save mix"]
+    Actions --> Save["Save library atomically"]
+    Save --> JSON["Local library JSON"]
+    JSON --> Library["Display likes and saved mixes"]
